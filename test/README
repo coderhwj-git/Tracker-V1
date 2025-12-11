@@ -1,0 +1,7 @@
+
+此目录专用于 PlatformIO 测试运行器和项目测试。
+
+单元测试是一种软件测试方法，通过该方法对源代码的各个单元、一个或多个 MCU 程序模块集合以及相关的控制数据、使用程序和操作程序进行测试，以确定它们是否适合使用。单元测试可以在开发周期的早期发现问题。
+
+更多关于 PlatformIO 单元测试的信息：
+- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html

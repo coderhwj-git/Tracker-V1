@@ -1,0 +1,507 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: Arial; 
+            text-align: center; 
+            margin: 0px auto; 
+            padding-top: 30px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            width: 80%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            width: 50%;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            width: 80%;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .input-group {
+            margin: 15px auto;
+            width: 80%;
+            max-width: 400px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .state { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 20px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .connect-btn {
+            background-color: #008CBA;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .clear-config-btn {
+            background-color: #f44336;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .ip-address {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .info-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+        .psram-enabled {
+            color: green;
+            font-weight: bold;
+        }
+        .psram-disabled {
+            color: red;
+            font-weight: bold;
+        }
+        /* 电机控制样式 */
+        .motor-control {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .motor-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        .slider-label {
+            display: inline-block;
+            width: 100px;
+        }
+        .motor-slider {
+            width: 70%;
+        }
+        .motor-button {
+            margin: 5px;
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 Tracker 管理面板</h1>
+    
+    <!-- Tab links -->
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'Configuration')">配置</button>
+        <button class="tablinks" onclick="openTab(event, 'Monitoring')">监控</button>
+        <button class="tablinks" onclick="openTab(event, 'Control')">控制</button>
+    </div>
+
+    <!-- Tab content -->
+    <div id="Configuration" class="tabcontent" style="display: block;">
+        <h2>WiFi配置</h2>
+        <p>开发板IP: <span id="apIpAddress"></span></p>
+        
+        <div class="state">
+            WiFi状态: <span id="wifiStateConfig"></span>
+        </div>
+        
+        <div style="width: 80%; max-width: 400px; margin: 20px auto; text-align: left;">
+            <h3>连接WiFi</h3>
+            <div class="input-group">
+                <label for="ssid">WiFi名称:</label>
+                <input type="text" id="ssid" placeholder="输入WiFi名称">
+            </div>
+            <div class="input-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" placeholder="输入WiFi密码">
+            </div>
+            <button class="button" onclick="connectToWiFi()">连接</button>
+            <button class="button clear-config-btn" onclick="clearWiFiConfig()" style="margin-left: 10px;">清除配置</button>
+        </div>
+        
+        <div id="connectionStatus"></div>
+        
+        <div style="width: 80%; max-width: 400px; margin: 20px auto; text-align: left;">
+            <h3>视频监控</h3>
+            <button class="button" onclick="capturePhoto()">拍照</button>
+            <button class="button" onclick="startVideoStream()" style="margin-left: 10px;">视频流</button>
+        </div>
+        
+        <div id="photoContainer" style="margin: 20px auto; text-align: center;"></div>
+        <div id="videoContainer" style="margin: 20px auto; text-align: center;"></div>
+    </div>
+
+    <div id="Monitoring" class="tabcontent">
+        <h2>系统监控</h2>
+        <div id="systemInfo">
+            <div class="info-item">
+                <span class="info-label">芯片型号:</span>
+                <span id="chipModel">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">芯片频率:</span>
+                <span id="cpuFreq">-</span> MHz
+            </div>
+            <div class="info-item">
+                <span class="info-label">Flash大小:</span>
+                <span id="flashSize">-</span> MB
+            </div>
+            <div class="info-item">
+                <span class="info-label">PSRAM:</span>
+                <span id="psramStatus">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">PSRAM大小:</span>
+                <span id="psramSize">-</span> MB
+            </div>
+            <div class="info-item">
+                <span class="info-label">可用PSRAM:</span>
+                <span id="freePsram">-</span> KB
+            </div>
+            <div class="info-item">
+                <span class="info-label">内存大小:</span>
+                <span id="heapSize">-</span> KB
+            </div>
+            <div class="info-item">
+                <span class="info-label">可用内存:</span>
+                <span id="freeHeap">-</span> KB
+            </div>
+            <div class="info-item">
+                <span class="info-label">最小可用内存:</span>
+                <span id="minFreeHeap">-</span> KB
+            </div>
+            <div class="info-item">
+                <span class="info-label">芯片温度:</span>
+                <span id="temperature">-</span> °C
+            </div>
+            <div class="info-item">
+                <span class="info-label">WiFi信号强度:</span>
+                <span id="wifiSignal">-</span> dBm
+            </div>
+            <div class="info-item">
+                <span class="info-label">本地IP:</span>
+                <span id="localIp">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">MAC地址:</span>
+                <span id="macAddress">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="Control" class="tabcontent">
+        <h2>设备控制</h2>
+        
+        <!-- 电机A控制 -->
+        <div class="motor-control">
+            <div class="motor-title">电机 A</div>
+            <div class="slider-container">
+                <span class="slider-label">速度:</span>
+                <input type="range" min="0" max="255" value="0" class="motor-slider" id="motorASpeed" onchange="updateMotorASpeed()">
+                <span id="motorASpeedValue">0</span>
+            </div>
+            <button class="button motor-button" onclick="setMotorAForward()">正转</button>
+            <button class="button motor-button" onclick="setMotorABackward()">反转</button>
+            <button class="button motor-button clear-config-btn" onclick="stopMotorA()">停止</button>
+        </div>
+        
+        <!-- 电机B控制 -->
+        <div class="motor-control">
+            <div class="motor-title">电机 B</div>
+            <div class="slider-container">
+                <span class="slider-label">速度:</span>
+                <input type="range" min="0" max="255" value="0" class="motor-slider" id="motorBSpeed" onchange="updateMotorBSpeed()">
+                <span id="motorBSpeedValue">0</span>
+            </div>
+            <button class="button motor-button" onclick="setMotorBForward()">正转</button>
+            <button class="button motor-button" onclick="setMotorBBackward()">反转</button>
+            <button class="button motor-button clear-config-btn" onclick="stopMotorB()">停止</button>
+        </div>
+        
+        <!-- 全部停止 -->
+        <div style="text-align: center; margin: 20px;">
+            <button class="button clear-config-btn" onclick="stopAllMotors()">全部停止</button>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时获取初始状态
+        window.onload = function() {
+            updateConfigStatus();
+            updateMonitoringInfo();
+            setInterval(updateConfigStatus, 5000); // 每5秒更新一次配置状态
+            setInterval(updateMonitoringInfo, 3000); // 每3秒更新一次监控信息
+        };
+        
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        function updateConfigStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("apIpAddress").innerText = data.ap_ip;
+                    document.getElementById("wifiStateConfig").innerText = data.wifi_state;
+                })
+                .catch(error => {
+                    console.error('获取状态失败:', error);
+                    document.getElementById("apIpAddress").innerText = "无法获取";
+                    document.getElementById("wifiStateConfig").innerText = "未知";
+                });
+        }
+        
+        function updateMonitoringInfo() {
+            fetch('/system_info')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("chipModel").innerText = data.chip_model;
+                    document.getElementById("cpuFreq").innerText = data.cpu_freq;
+                    document.getElementById("flashSize").innerText = data.flash_size;
+                    
+                    // PSRAM信息
+                    if (data.psram_enabled) {
+                        document.getElementById("psramStatus").innerHTML = '<span class="psram-enabled">已启用</span>';
+                        document.getElementById("psramSize").innerText = data.psram_size;
+                        document.getElementById("freePsram").innerText = data.free_psram;
+                    } else {
+                        document.getElementById("psramStatus").innerHTML = '<span class="psram-disabled">未启用</span>';
+                        document.getElementById("psramSize").innerText = "0";
+                        document.getElementById("freePsram").innerText = "0";
+                    }
+                    
+                    document.getElementById("heapSize").innerText = data.heap_size;
+                    document.getElementById("freeHeap").innerText = data.free_heap;
+                    document.getElementById("minFreeHeap").innerText = data.min_free_heap;
+                    document.getElementById("temperature").innerText = data.temperature;
+                    document.getElementById("wifiSignal").innerText = data.wifi_signal;
+                    document.getElementById("localIp").innerText = data.local_ip;
+                    document.getElementById("macAddress").innerText = data.mac_address;
+                })
+                .catch(error => {
+                    console.error('获取监控信息失败:', error);
+                });
+        }
+        
+        function connectToWiFi() {
+            const ssid = document.getElementById("ssid").value;
+            const password = document.getElementById("password").value;
+            
+            if (ssid.trim() === "") {
+                alert("请输入WiFi名称");
+                return;
+            }
+            
+            document.getElementById("connectionStatus").innerHTML = "<p>正在连接到 " + ssid + "...</p>";
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/connect", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify({ssid: ssid, password: password}));
+            
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.ip) {
+                        document.getElementById("connectionStatus").innerHTML = 
+                            "<p>" + response.message + "</p>" +
+                            "<p>分配的IP地址: <span class='ip-address'>" + response.ip + "</span></p>";
+                    } else {
+                        document.getElementById("connectionStatus").innerHTML = "<p>" + response.message + "</p>";
+                    }
+                    updateConfigStatus(); // 更新状态显示
+                }
+            }
+            
+            xhr.onerror = function() {
+                document.getElementById("connectionStatus").innerHTML = "<p>连接请求失败</p>";
+            }
+        }
+        
+        function clearWiFiConfig() {
+            if (confirm("确定要清除保存的WiFi配置吗？")) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/clear_wifi_config", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send();
+                
+                xhr.onload = function() {
+                    if (xhr.status == 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        alert(response.message);
+                        updateConfigStatus(); // 更新状态显示
+                    }
+                }
+                
+                xhr.onerror = function() {
+                    alert("清除配置请求失败");
+                }
+            }
+        }
+        
+        function capturePhoto() {
+            document.getElementById("photoContainer").innerHTML = '<p>正在拍照...</p><img id="capturedPhoto" src="/capture" style="max-width: 100%; height: auto;" />';
+            document.getElementById("videoContainer").innerHTML = '';
+        }
+        
+        function startVideoStream() {
+            document.getElementById("videoContainer").innerHTML = '<p>正在打开视频流...</p><img id="videoStream" src="/video" style="max-width: 100%; height: auto;" />';
+            document.getElementById("photoContainer").innerHTML = '';
+        }
+        
+        // 电机控制函数
+        function updateMotorASpeed() {
+            var speed = document.getElementById("motorASpeed").value;
+            document.getElementById("motorASpeedValue").innerText = speed;
+        }
+        
+        function updateMotorBSpeed() {
+            var speed = document.getElementById("motorBSpeed").value;
+            document.getElementById("motorBSpeedValue").innerText = speed;
+        }
+        
+        function setMotorAForward() {
+            var speed = document.getElementById("motorASpeed").value;
+            sendMotorCommand("A", true, parseInt(speed));
+        }
+        
+        function setMotorABackward() {
+            var speed = document.getElementById("motorASpeed").value;
+            sendMotorCommand("A", false, parseInt(speed));
+        }
+        
+        function stopMotorA() {
+            sendMotorCommand("A", true, 0);
+            document.getElementById("motorASpeed").value = 0;
+            document.getElementById("motorASpeedValue").innerText = "0";
+        }
+        
+        function setMotorBForward() {
+            var speed = document.getElementById("motorBSpeed").value;
+            sendMotorCommand("B", true, parseInt(speed));
+        }
+        
+        function setMotorBBackward() {
+            var speed = document.getElementById("motorBSpeed").value;
+            sendMotorCommand("B", false, parseInt(speed));
+        }
+        
+        function stopMotorB() {
+            sendMotorCommand("B", true, 0);
+            document.getElementById("motorBSpeed").value = 0;
+            document.getElementById("motorBSpeedValue").innerText = "0";
+        }
+        
+        function stopAllMotors() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/stop_motors", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send();
+            
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    console.log("所有电机已停止");
+                    // 重置滑块和显示值
+                    document.getElementById("motorASpeed").value = 0;
+                    document.getElementById("motorASpeedValue").innerText = "0";
+                    document.getElementById("motorBSpeed").value = 0;
+                    document.getElementById("motorBSpeedValue").innerText = "0";
+                }
+            };
+        }
+        
+        function sendMotorCommand(motor, direction, speed) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/control_motor", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify({
+                motor: motor,
+                direction: direction,
+                speed: speed
+            }));
+            
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    console.log("电机控制命令已发送: 电机" + motor + ", 方向:" + (direction?"正转":"反转") + ", 速度:" + speed);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
