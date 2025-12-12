@@ -17,6 +17,7 @@
             width: 100%;
             /* max-width: 600px; */
             margin: 0 auto;
+            height: 2.5rem;
             position: absolute;
             bottom: 0px;
         }
@@ -160,6 +161,73 @@
             margin: 5px;
             padding: 8px 16px;
         }
+
+        /* 增加媒体查询以适应横屏幕设备 */
+        @media screen and (min-width: 800px) {
+           #Control {
+            width: 100%;
+            max-width: 100%;
+            border: none;
+           }
+           .tab {
+                top: 0px;
+                
+           }
+           .component {
+                position: absolute;
+                border: none;
+           }
+           .component-left {
+            left: 0px;
+           }
+
+        .component-right {
+            right: 0px;
+           }
+
+           .motor-control {
+            display: inline-block;
+            width: 28%;
+            vertical-align: top;
+           }
+
+           #move {
+
+           }
+
+            .direction {
+                width: 200px;
+                height: 200px;
+                display: block;
+                position: relative;
+            }
+           
+           .op-forward,.op-backward,.op-left,.op-right,.op-stop {
+            position: absolute;
+           }
+
+            .top-loc {
+            top: 0px;
+           }
+
+           
+            .bottom-loc {
+            bottom: 0px;
+           }
+
+           .vertical-loc {
+            left: 33%;
+           }
+           .horizontal-loc {
+            bottom: 38%;
+           }
+           .left-loc {
+            left: 0px;
+           }
+            .right-loc {
+            right: 0px;
+           }
+        }
     </style>
 </head>
 <body>
@@ -253,15 +321,14 @@
     </div>
     
     <div id="Control" class="tabcontent">
-        <h4>设备控制</h4>
         
         <!-- 电机A控制 -->
-        <div class="motor-control">
-            <div class="motor-title">电机 A</div>
+        <div class="motor-control" style="display:none;">
+            <div  class="motor-title">左（A）</div>
             <div class="slider-container">
                 <span class="slider-label">速度:</span>
-                <input type="range" min="0" max="255" value="0" class="motor-slider" id="motorASpeed" onchange="updateMotorASpeed()">
-                <span id="motorASpeedValue">0</span>
+                <input type="range" min="100" max="255" value="100" class="motor-slider" id="motorASpeed" onchange="updateMotorASpeed()">
+                <span id="motorASpeedValue">100</span>
             </div>
             <button class="button motor-button" onclick="setMotorAForward()">正转</button>
             <button class="button motor-button" onclick="setMotorABackward()">反转</button>
@@ -269,42 +336,59 @@
         </div>
         
         <!-- 电机B控制 -->
-        <div class="motor-control">
-            <div class="motor-title">电机 B</div>
+        <div class="motor-control" style="display:none;">
+            <div class="motor-title">右（B）</div>
             <div class="slider-container">
                 <span class="slider-label">速度:</span>
-                <input type="range" min="0" max="255" value="0" class="motor-slider" id="motorBSpeed" onchange="updateMotorBSpeed()">
-                <span id="motorBSpeedValue">0</span>
+                <input type="range" min="100" max="255" value="100" class="motor-slider" id="motorBSpeed" onchange="updateMotorBSpeed()">
+                <span id="motorBSpeedValue">100</span>
             </div>
             <button class="button motor-button" onclick="setMotorBForward()">正转</button>
             <button class="button motor-button" onclick="setMotorBBackward()">反转</button>
             <button class="button motor-button clear-config-btn" onclick="stopMotorB()">停止</button>
         </div>
-
-        <!-- 同速前进 -->
-        <div class="motor-control">
-            <div class="motor-title">同速度</div>
-            <div class="slider-container">
+        
+        <!-- 视频控制 -->
+        <div class="motor-control component component-left">
+         <!-- <div  class="motor-title">左控</div> -->
+         <div class="slider-container">
                 <span class="slider-label">速度:</span>
-                <input type="range" min="110" max="255" value="100" class="motor-slider" id="motorTwoSpeed" onchange="updateMotorTwoSpeed()">
-                <span id="motorTwoSpeedValue">0</span>
+                <input type="range"  max="255" min="100" value="100" class="motor-slider" id="motorTwoSpeed" onchange="updateMotorTwoSpeed()">
+                <span id="motorTwoSpeedValue">100</span>
             </div>
-            <button class="button motor-button" onclick="setMotorTwoForward()">正转</button>
-            <button class="button motor-button" onclick="setMotorTwoBackward()">反转</button>
-        </div>
-        
-        
-        <!-- 全部停止 -->
-        <div style="text-align: center; margin: 20px;">
-            <button class="button clear-config-btn" onclick="stopAllMotors()">全部停止</button>
-        </div>
-
-        <div style="width: 80%; max-width: 400px; margin: 20px auto; text-align: left;">
-            <h4>视频监控</h4>
+            <div style="width: 80%; max-width: 400px; margin: 20px auto; text-align: left;">
             <button class="button" onclick="capturePhoto()">拍照</button>
             <button class="button" onclick="startVideoStream()" style="margin-left: 10px;">视频流</button>
         </div>
         
+        </div>
+
+        <!-- 同速前进 -->
+        <div  class="motor-control component component-right">
+            <!-- <div class="motor-title">右控</div> -->
+  
+       
+            <div class="direction">
+                <button class="button clear-config-btn vertical-loc horizontal-loc op-stop" onclick="stopAllMotors()">停车</button>
+                <button class="button motor-button vertical-loc top-loc op-forward"  onclick="setMotorTwoForward()">前进</button>
+                <button class="button motor-button horizontal-loc left-loc op-left"     onclick="setMotorTurnLeft()">左转</button>
+                <button class="button motor-button horizontal-loc right-loc op-right"    onclick="setMotorTurnRight()">右转</button>
+                <button class="button motor-button vertical-loc bottom-loc op-backward" onclick="setMotorTwoBackward()">倒车</button>
+            </div>
+        </div>
+        
+        
+        <!-- 全部停止 -->
+        <!-- <div style="text-align: center; margin: 20px;">
+            <button class="button clear-config-btn" onclick="stopAllMotors()">全部停止</button>
+        </div> -->
+
+        <!-- <div style="width: 80%; max-width: 400px; margin: 20px auto; text-align: left;">
+            <h4>视频监控</h4>
+            <button class="button" onclick="capturePhoto()">拍照</button>
+            <button class="button" onclick="startVideoStream()" style="margin-left: 10px;">视频流</button>
+        </div>
+         -->
         <div id="photoContainer" style="margin: 20px auto; text-align: center;"></div>
         <div id="videoContainer" style="margin: 20px auto; text-align: center;"></div>
     </div>
@@ -321,8 +405,8 @@
         window.onload = function() {
             updateConfigStatus();
             updateMonitoringInfo();
-            setInterval(updateConfigStatus, 5000); // 每5秒更新一次配置状态
-            setInterval(updateMonitoringInfo, 3000); // 每3秒更新一次监控信息
+            setInterval(updateConfigStatus, 10*1000); // 每5秒更新一次配置状态
+            setInterval(updateMonitoringInfo, 10*1000); // 每3秒更新一次监控信息
         };
         
         function openTab(evt, tabName) {
@@ -459,6 +543,9 @@
             document.getElementById("motorASpeedValue").innerText = speed;
             document.getElementById("motorBSpeed").value = speed;
             document.getElementById("motorBSpeedValue").innerText = speed;
+
+            sendMotorCommand("A", true, parseInt(speed));
+            sendMotorCommand("B", true, parseInt(speed));
         }
 
         function setMotorTwoForward() {
@@ -472,6 +559,28 @@
             sendMotorCommand("A", false, parseInt(speed));
             sendMotorCommand("B", false, parseInt(speed));
         }
+
+        function setMotorTurnLeft() {
+            var speed = document.getElementById("motorTwoSpeed").value;
+            var lowSpeed = speed - 10;
+            if(lowSpeed < 0){
+                lowSpeed = 0;
+            }
+            sendMotorCommand("A", false, parseInt(lowSpeed));
+            sendMotorCommand("B", false, parseInt(speed));
+        }
+
+        
+        function setMotorTurnRight() {
+            var speed = document.getElementById("motorTwoSpeed").value;
+            var lowSpeed = speed - 10;
+            if(lowSpeed < 0){
+                lowSpeed = 0;
+            }
+            sendMotorCommand("A", false, parseInt(speed));
+            sendMotorCommand("B", false, parseInt(lowSpeed));
+        }
+
         
 
         function updateMotorASpeed() {

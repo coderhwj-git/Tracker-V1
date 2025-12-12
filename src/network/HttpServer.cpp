@@ -5,13 +5,13 @@
 
 
 // 创建摄像头对象
-Ov7670Cam camera;
+extern Ov7670Cam * camera;
 
 // 创建Preferences对象用于保存WiFi配置
 Preferences preferences;
 
 // 声明外部电机对象
-extern Tb6612fng tb6612fng;
+extern Tb6612fng* tb6612fng;
 
 
 // 自定义视频流响应类
@@ -69,6 +69,9 @@ class VideoStreamResponse: public AsyncAbstractResponse {
         free(image.buf);
       }
 
+      // 添加延迟，让其他任务有机会运行，防止看门狗超时
+      vTaskDelay(1 / portTICK_PERIOD_MS);
+      
       return headerLen + image.buf_len;
     }
 
@@ -88,8 +91,6 @@ void HttpServer::init() {
     this->bindRuouters();
     // 提供静态文件服务
     server.serveStatic("/", LittleFS, "/");
-    //初始化摄像头
-    camera.initCamera();
     
     // 初始化Preferences
     preferences.begin(WIFI_CONFIG_NAME, false);
@@ -244,7 +245,7 @@ void HttpServer::bindRuouters() {
   // 7. 拍照
   server.on("/capture", HTTP_GET, [](AsyncWebServerRequest *request) {
     
-    CamImage image = camera.capture();
+    CamImage image = camera->capture();
     if (!image.buf) {
         request->send(500, "text/plain", "拍照失败");
         return;
@@ -266,7 +267,7 @@ void HttpServer::bindRuouters() {
 
   // 8. 视频流
   server.on("/video", HTTP_GET, [this](AsyncWebServerRequest *request) {
-    VideoStreamResponse *response = new VideoStreamResponse(&camera);
+    VideoStreamResponse *response = new VideoStreamResponse(camera);
     request->send(response);
   });
   
@@ -282,16 +283,22 @@ void HttpServer::bindRuouters() {
           return;
       }
       
+      // 检查tb6612fng是否已初始化
+      if (tb6612fng == nullptr) {
+          request->send(500, "application/json", "{\"message\":\"电机控制器未初始化\"}");
+          return;
+      }
+      
       const char* motor = doc["motor"];  // "A" 或 "B"
       bool direction = doc["direction"]; // true=正转, false=反转
       int speed = doc["speed"];          // 0-255
       
       if (strcmp(motor, "A") == 0) {
-          Tb6612fngMOTOR* motorA = tb6612fng.getAMotor();
+          Tb6612fngMOTOR* motorA = tb6612fng->getAMotor();
           motorA->setDirection(direction);
           motorA->setSpeed(speed);
       } else if (strcmp(motor, "B") == 0) {
-          Tb6612fngMOTOR* motorB = tb6612fng.getBMotor();
+          Tb6612fngMOTOR* motorB = tb6612fng->getBMotor();
           motorB->setDirection(direction);
           motorB->setSpeed(speed);
       } else {
@@ -304,8 +311,14 @@ void HttpServer::bindRuouters() {
   
   // 10. 停止所有电机
   server.on("/stop_motors", HTTP_POST, [](AsyncWebServerRequest *request) {
-      tb6612fng.getAMotor()->stop();
-      tb6612fng.getBMotor()->stop();
+      // 检查tb6612fng是否已初始化
+      if (tb6612fng == nullptr) {
+          request->send(500, "application/json", "{\"message\":\"电机控制器未初始化\"}");
+          return;
+      }
+      
+      tb6612fng->getAMotor()->stop();
+      tb6612fng->getBMotor()->stop();
       request->send(200, "application/json", "{\"message\":\"所有电机已停止\"}");
   });
 }

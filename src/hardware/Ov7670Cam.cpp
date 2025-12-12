@@ -6,14 +6,14 @@
 bool Ov7670Cam::initCamera() {
     this -> config.ledc_channel = LEDC_CHANNEL_0;
     this -> config.ledc_timer = LEDC_TIMER_0;
-    this -> config.pin_d0 = Y2_GPIO_NUM;
-    this -> config.pin_d1 = Y3_GPIO_NUM;
-    this -> config.pin_d2 = Y4_GPIO_NUM;
-    this -> config.pin_d3 = Y5_GPIO_NUM;
-    this -> config.pin_d4 = Y6_GPIO_NUM;
-    this -> config.pin_d5 = Y7_GPIO_NUM;
-    this -> config.pin_d6 = Y8_GPIO_NUM;
-    this -> config.pin_d7 = Y9_GPIO_NUM;
+    this -> config.pin_d0 = D0_GPIO_NUM;
+    this -> config.pin_d1 = D1_GPIO_NUM;
+    this -> config.pin_d2 = D2_GPIO_NUM;
+    this -> config.pin_d3 = D3_GPIO_NUM;
+    this -> config.pin_d4 = D4_GPIO_NUM;
+    this -> config.pin_d5 = D5_GPIO_NUM;
+    this -> config.pin_d6 = D6_GPIO_NUM;
+    this -> config.pin_d7 = D7_GPIO_NUM;
     this -> config.pin_xclk = XCLK_GPIO_NUM;
     this -> config.pin_pclk = PCLK_GPIO_NUM;
     this -> config.pin_vsync = VSYNC_GPIO_NUM;
@@ -22,25 +22,18 @@ bool Ov7670Cam::initCamera() {
     this -> config.pin_sccb_scl = SIOC_GPIO_NUM;
     this -> config.pin_pwdn = PWDN_GPIO_NUM;
     this -> config.pin_reset = RESET_GPIO_NUM;
-    this -> config.xclk_freq_hz = 10000000; // 降低时钟频率以减少功耗和发热
+    this -> config.xclk_freq_hz = 10000000; // 提高时钟频率至10MHz以获得更好性能
     // OV7670 不支持 JPEG，使用 RGB565
     this -> config.pixel_format = PIXFORMAT_RGB565;  
     
-    // 检查PSRAM是否可用，如果可用则使用更高分辨率和更多缓冲区
-    if(psramFound()){
-        config.frame_size = FRAMESIZE_QVGA;   // 使用QVGA分辨率 (320x240)
-        config.jpeg_quality = 16;             // JPEG质量适中
-        config.fb_count = 2;                  // 使用双缓冲
-        logger.info("使用PSRAM，设置分辨率为QVGA");
-    } else {
-        config.frame_size = FRAMESIZE_QVGA;   // 使用QVGA分辨率 (320x240)
-        config.jpeg_quality = 12;             // JPEG质量适中
-        config.fb_count = 1;                  // 使用单缓冲
-        logger.info("未使用PSRAM，设置分辨率为QVGA");
-    }
+    // 使用更合适的分辨率 (QVGA 320x240)
+    config.frame_size = FRAMESIZE_QVGA;
+    config.jpeg_quality = 10;              // 提高JPEG质量以获得更好的图像效果
+    config.fb_count = 2;                   // 使用双缓冲提高性能
+    logger.info("设置分辨率为320x240");
     
-    // 设置摄像头任务参数以避免堆栈溢出
-    config.grab_mode = CAMERA_GRAB_LATEST; // 改为获取最新帧，而不是等待空帧
+    // 设置摄像头任务参数
+    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
     config.fb_location = CAMERA_FB_IN_PSRAM;
 
     // 初始化摄像头
@@ -49,7 +42,8 @@ bool Ov7670Cam::initCamera() {
         logger.error("摄像头初始化失败，错误代码：0x%x\n",  err);
         return false;
     }
-    
+    logger.info("摄像头初始化成功");
+
     // 获取摄像头传感器并进行基础设置
     sensor_t * s = esp_camera_sensor_get();
     if (s == NULL) {
@@ -57,32 +51,26 @@ bool Ov7670Cam::initCamera() {
         return false;
     }
     
-    logger.info("摄像头传感器型号: 0x%x\n", s->id.PID);
-    s->set_framesize(s, config.frame_size);
+    // 关闭一些不必要的自动处理功能以提高性能和一致性
+    s->set_ae_level(s, 0);        // 自动曝光补偿级别设为0
+    s->set_aec2(s, false);        // 关闭自动曝光控制
+    s->set_awb_gain(s, false);    // 关闭自动白平衡增益
+    s->set_agc_gain(s, 0);        // 关闭自动增益控制
+    // s->set_saturation(s, 0);      // 饱和度设为0
+    s->set_sharpness(s, 0);       // 锐度设为0
+    s->set_denoise(s, 0);         // 关闭降噪功能
+    s->set_gain_ctrl(s, 0);       // 关闭自动增益控制
+    s->set_exposure_ctrl(s, 0);   // 关闭自动曝光控制
+    s->set_hmirror(s, 0);         // 关闭水平镜像
+    s->set_vflip(s, 0);           // 关闭垂直翻转
+    s->set_colorbar(s, 0);        // 关闭彩条测试模式
+    s->set_special_effect(s, 0);  // 关闭特殊效果
+    s->set_whitebal(s, 0);        // 关闭自动白平衡
+    // s->set_contrast(s, 0);        // 对比度设为0
+    s->set_brightness(s, 0);      // 亮度设为0
     
-    // 优化摄像头参数以减少内存使用
-    s->set_brightness(s, 0);     // 亮度
-    s->set_contrast(s, 0);       // 对比度
-    s->set_saturation(s, 0);     // 饱和度
-    s->set_special_effect(s, 0); // 关闭特效
-    s->set_whitebal(s, 1);       // 白平衡
-    s->set_awb_gain(s, 1);       // 自动白平衡增益
-    s->set_wb_mode(s, 0);        // 白平衡模式
-    s->set_exposure_ctrl(s, 1);  // 自动曝光
-    s->set_aec2(s, 0);           // 关闭自动曝光值
-    s->set_ae_level(s, 0);       // AE等级
-    s->set_aec_value(s, 300);    // AE值
-    s->set_gain_ctrl(s, 1);      // 自动增益
-    s->set_agc_gain(s, 0);       // AGC增益
-    s->set_gainceiling(s, (gainceiling_t)0); // 增益上限
-    s->set_bpc(s, 1);            // 黑点校正
-    s->set_wpc(s, 1);            // 白点校正
-    s->set_raw_gma(s, 1);        // Gamma校正
-    s->set_lenc(s, 1);           // 镜头校正
-    s->set_hmirror(s, 0);        // 水平镜像
-    s->set_vflip(s, 0);          // 垂直翻转
-    s->set_dcw(s, 1);            // 降采样
-    s->set_colorbar(s, 0);       // 彩条
+    logger.info("摄像头传感器型号: 0x%x\n", s->id.PID);
+    
     
     logger.info("摄像头初始化成功");
     return true;
@@ -106,18 +94,9 @@ CamImage Ov7670Cam::capture() {
 
     // 如果正在进行视频流，则等待一小段时间让其释放摄像头资源
     if(this->is_streaming) {
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     
-    // 丢弃几帧旧图像，确保获取最新图像
-    for(int i = 0; i < 2; i++) {  // 增加丢弃帧数以提高图像质量
-        camera_fb_t* fb_old = esp_camera_fb_get();
-        if (fb_old) {
-            esp_camera_fb_return(fb_old);
-        }
-        vTaskDelay(5 / portTICK_PERIOD_MS); // 减少延迟时间
-    }
-
     // 获取一帧图像用于拍照
     fb = esp_camera_fb_get();
     img.fb = fb;
@@ -141,8 +120,11 @@ CamImage Ov7670Cam::capture() {
         if (!jpeg_converted) {
             logger.error("JPEG压缩失败");
             esp_camera_fb_return(fb);
-            free(jpg_buf);
+            if (jpg_buf) {
+                free(jpg_buf);
+            }
             img.fb = NULL;
+            img.buf = NULL;
             return img;
         }
         
@@ -190,8 +172,11 @@ CamImage Ov7670Cam::videoStream() {
         if (!jpeg_converted) {
             logger.error("JPEG压缩失败");
             esp_camera_fb_return(fb);
-            free(jpg_buf);
+            if (jpg_buf) {
+                free(jpg_buf);
+            }
             img.fb = NULL;
+            img.buf = NULL;
             return img;
         }
         
