@@ -58,7 +58,7 @@ bool Ov7670Cam::initCamera() {
     s->set_agc_gain(s, 0);        // 关闭自动增益控制
     // s->set_saturation(s, 0);      // 饱和度设为0
     s->set_sharpness(s, 0);       // 锐度设为0
-    s->set_denoise(s, 0);         // 关闭降噪功能
+    s->set_denoise(s, 1);         // 关闭降噪功能
     s->set_gain_ctrl(s, 0);       // 关闭自动增益控制
     s->set_exposure_ctrl(s, 0);   // 关闭自动曝光控制
     s->set_hmirror(s, 0);         // 关闭水平镜像
@@ -67,7 +67,7 @@ bool Ov7670Cam::initCamera() {
     s->set_special_effect(s, 0);  // 关闭特殊效果
     s->set_whitebal(s, 0);        // 关闭自动白平衡
     // s->set_contrast(s, 0);        // 对比度设为0
-    s->set_brightness(s, 0);      // 亮度设为0
+    s->set_brightness(s, 1);      // 亮度设为0
     
     logger.info("摄像头传感器型号: 0x%x\n", s->id.PID);
     

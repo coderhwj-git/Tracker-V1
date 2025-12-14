@@ -9,10 +9,12 @@
             margin: 0px auto; 
             padding-top: 30px;
             font-size: 16px;
+            background-color: #292727;
+            color: #e4e8e4;
         }
         .tab {
             overflow: hidden;
-            border: 1px solid #ccc;
+            /* border: 1px solid #ccc; */
             background-color: #1e1d1d4f;
             width: 100%;
             /* max-width: 600px; */
@@ -54,14 +56,14 @@
         .tabcontent {
             display: none;
             padding: 6px 12px;
-            border: 1px solid #ccc;
+            /* border: 1px solid #ccc; */
             width: 80%;
             max-width: 600px;
             margin: 0 auto;
             text-align: left;
         }
         .button {
-            background-color: #4CAF50;
+            background-color: #70737ed6;
             border: none;
             color: white;
             padding: 0.5rem 1rem;
@@ -122,10 +124,11 @@
             font-weight: bold;
         }
         .info-item {
-            /* margin: 10px 0; */
-            padding: 10px;
+            margin: 12px 0;
             /* border: 1px solid #ddd; */
             /* border-radius: 5px; */
+            width: 50%;
+            float: left;
         }
         .info-label {
             font-weight: bold;
@@ -157,6 +160,7 @@
         .slider-label {
             display: inline-block;
             width: 100px;
+            font-size: 0.8rem;
         }
         .motor-slider {
             width: 70%;
@@ -166,10 +170,71 @@
             padding: 8px 16px;
         }
 
+        .icon-forward {
+            display: block;
+            width: 1rem;
+            width: 1rem;
+            margin: auto;
+            transform: rotate(90deg);
+        }
+
+        .icon-backward { 
+            display: block;
+            width: 1rem;
+            width: 1rem;
+            margin: auto;
+            transform: rotate(270deg);
+        }
+
+      .icon-left { 
+            display: block;
+            width: 1rem;
+            width: 1rem;
+            margin: auto;
+            transform: rotate(0deg);
+        }
+
+      .icon-right { 
+            display: block;
+            width: 1rem;
+            width: 1rem;
+            margin: auto;
+            transform: rotate(180deg);
+        }
+        .screen-container{
+            
+        }
+
+        .screen{
+            position: absolute;
+            top: 60px;
+            left: calc(50% - 150px);
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background-color: #404340;
+            box-shadow: 0 0 74px #ffffff4f inset;
+            text-align: center;
+            line-height: 280px;
+            border: 10px solid #1f202100;
+            color: #4CAF50;
+
+        }
+
+        .screen-after{
+            position: absolute;
+            top: 86px;
+            left: 0px;
+            width: 100%;
+            height: 210px;
+            background-color: #4d4f50;
+            box-shadow: 0 0 40px #8e8e8e inset;
+        }
+
         /* 增加媒体查询以适应横屏幕设备 */
         @media screen and (min-width: 800px) {
            #Control {
-            width: 100%;
+            width: calc(100% - 24px);
             max-width: 100%;
             border: none;
            }
@@ -180,6 +245,7 @@
            .component {
                 position: absolute;
                 border: none;
+                top:55px;
            }
            .component-left {
             left: 0px;
@@ -210,9 +276,7 @@
                 position: relative;
                
             }
-            .direction button {
-                background-color: #008bba95;
-            }
+
            
            .op-forward,.op-backward,.op-left,.op-right,.op-stop {
             position: absolute;
@@ -243,7 +307,7 @@
     </style>
 </head>
 <body>
-
+    
     <!-- Tab content -->
     <div id="Configuration" class="tabcontent" >
         <h4>WiFi配置</h4>
@@ -330,21 +394,23 @@
     </div>
     
     <div id="Control" class="tabcontent" style="display: block;">
-        <div> <span id="monitor-cpu" style="font-size: 0.5rem;padding-top: 2px;">-</span></div>
+            <div  id="directionValue" style="text-align: center; color: red; font-size:0.8rem; margin: 4px auto;"> 前进</div>
+            <input type="radio" id="direction" hidden checked="false" >
+
+        <div class="screen-container">
+            <div class="screen-after"> </div>
+            <div class="screen" id="monitor-cpu" >系统启动中~....</div>
+        </div>
+
+    
 
         <!-- 视频控制 -->
         <div class="motor-control component component-left">
-
-
-            <div class="slider-container">
-                <span class="slider-label">行驶方向:</span><span id="directionValue">前进</span>
-                <input type="radio" id="direction" hidden checked="false" >
-            </div>
-
+       
              
          <!-- <div  class="motor-title">左控</div> -->
             <div class="slider-container">
-                <span class="slider-label">行驶速度:</span>
+                <span class="slider-label">行驶油门:</span>
                 <input type="range"  max="255" min="100" value="100" class="motor-slider" id="motorTwoSpeed" onchange="updateMotorTwoSpeed()">
                 <span id="motorTwoSpeedValue">100</span>
             </div>
@@ -367,10 +433,10 @@
        
             <div class="direction">
                 <button class="button circle clear-config-btn vertical-loc horizontal-loc op-stop" onclick="stopAllMotors()">停</button>
-                <button class="button circle motor-button vertical-loc top-loc op-forward"  onclick="setMotorTwoForward()">前</button>
-                <button class="button circle motor-button horizontal-loc left-loc op-left"     onclick="setMotorTurnLeft()">左</button>
-                <button class="button circle motor-button horizontal-loc right-loc op-right"    onclick="setMotorTurnRight()">右</button>
-                <button class="button circle motor-button vertical-loc bottom-loc op-backward" onclick="setMotorTwoBackward()">倒</button>
+                <button class="button circle motor-button vertical-loc top-loc op-forward"  onclick="setMotorTwoForward()"><span class="icon-forward">&lt;</span></button>
+                <button class="button circle motor-button horizontal-loc left-loc op-left"     onclick="setMotorTurnLeft"><span class="icon-left">&lt;</span></button>
+                <button class="button circle motor-button horizontal-loc right-loc op-right"    onclick="setMotorTurnRight()"><span class="icon-right">&lt;</span></button>
+                <button class="button circle motor-button vertical-loc bottom-loc op-backward" onclick="setMotorTwoBackward()"><span class="icon-backward">&lt;</span></button>
             </div>
         </div>
         
@@ -394,7 +460,7 @@
     <div class="tab">
         <button class="tablinks " onclick="openTab(event, 'Configuration')">配置</button>
         <button class="tablinks" onclick="openTab(event, 'Monitoring')">监控</button>
-        <button class="tablinks active" onclick="openTab(event, 'Control')">控制</button>
+        <button class="tablinks active" onclick="openTab(event, 'Control')">驾驶</button>
     </div>
 
     <script>

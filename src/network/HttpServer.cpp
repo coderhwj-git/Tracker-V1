@@ -70,7 +70,12 @@ class VideoStreamResponse: public AsyncAbstractResponse {
       }
 
       // 添加延迟，让其他任务有机会运行，防止看门狗超时
-      vTaskDelay(1 / portTICK_PERIOD_MS);
+      // 增加延迟时间并主动让出控制权
+      vTaskDelay(5 / portTICK_PERIOD_MS);
+      //增加电子狗投喂
+    
+      yield();
+  
       
       return headerLen + image.buf_len;
     }

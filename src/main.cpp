@@ -35,7 +35,7 @@ void setup() {
   //wifi初始化及自动连接
   wifiLink = new WifiLink();
   wifiLink->init();
-  // wifiLink->autoConnect();
+  wifiLink->autoConnect();
   logger.info("Wifi 网络初始化完成...");
 
   // 初始化电机驱动器
