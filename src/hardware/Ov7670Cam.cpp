@@ -1,9 +1,14 @@
 #include "hardware/Ov7670Cam.h"
 #include "utils/Logger.h"
 #include "config/PinConfig.h"
+#include <esp_task_wdt.h>
+#include <freertos/task.h>
 
 // 初始化摄像头
 bool Ov7670Cam::initCamera() {
+    logger.info("初始化摄像头...");
+    
+
     this -> config.ledc_channel = LEDC_CHANNEL_0;
     this -> config.ledc_timer = LEDC_TIMER_0;
     this -> config.pin_d0 = D0_GPIO_NUM;
@@ -28,12 +33,12 @@ bool Ov7670Cam::initCamera() {
     
     // 使用更合适的分辨率 (QVGA 320x240)
     config.frame_size = FRAMESIZE_QVGA;
-    config.jpeg_quality = 10;              // 提高JPEG质量以获得更好的图像效果
+    config.jpeg_quality = 12;              // 稍微降低JPEG质量以减少处理负担
     config.fb_count = 2;                   // 使用双缓冲提高性能
     logger.info("设置分辨率为320x240");
     
     // 设置摄像头任务参数
-    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+    config.grab_mode = CAMERA_GRAB_LATEST; // 改为CAMERA_GRAB_LATEST模式以避免堆积
     config.fb_location = CAMERA_FB_IN_PSRAM;
 
     // 初始化摄像头
@@ -53,19 +58,19 @@ bool Ov7670Cam::initCamera() {
     
     // 关闭一些不必要的自动处理功能以提高性能和一致性
     s->set_ae_level(s, 0);        // 自动曝光补偿级别设为0
-    s->set_aec2(s, false);        // 关闭自动曝光控制
-    s->set_awb_gain(s, false);    // 关闭自动白平衡增益
+    s->set_aec2(s, false);        // 开启自动曝光控制
+    s->set_awb_gain(s, true);    // 开启自动白平衡增益
     s->set_agc_gain(s, 0);        // 关闭自动增益控制
     // s->set_saturation(s, 0);      // 饱和度设为0
     s->set_sharpness(s, 0);       // 锐度设为0
-    s->set_denoise(s, 1);         // 关闭降噪功能
+    s->set_denoise(s, 1);         // 开启降噪功能
     s->set_gain_ctrl(s, 0);       // 关闭自动增益控制
-    s->set_exposure_ctrl(s, 0);   // 关闭自动曝光控制
+    s->set_exposure_ctrl(s, 1);   // 开启自动曝光控制
     s->set_hmirror(s, 0);         // 关闭水平镜像
     s->set_vflip(s, 0);           // 关闭垂直翻转
     s->set_colorbar(s, 0);        // 关闭彩条测试模式
     s->set_special_effect(s, 0);  // 关闭特殊效果
-    s->set_whitebal(s, 0);        // 关闭自动白平衡
+    s->set_whitebal(s, 1);        // 开启自动白平衡
     // s->set_contrast(s, 0);        // 对比度设为0
     s->set_brightness(s, 1);      // 亮度设为0
     
@@ -150,8 +155,15 @@ CamImage Ov7670Cam::videoStream() {
     CamImage img;
     camera_fb_t * fb = NULL;
     
+    // 在获取帧之前添加延迟，给其他任务运行的机会
+    vTaskDelay(5 / portTICK_PERIOD_MS);
+    yield();
+    
     // 获取一帧图像用于视频流
     fb = esp_camera_fb_get();
+    // 获取图像后立即让出控制权
+    yield();
+    
     img.fb = fb;
 
     if (!fb) {
@@ -177,6 +189,7 @@ CamImage Ov7670Cam::videoStream() {
             }
             img.fb = NULL;
             img.buf = NULL;
+            yield();
             return img;
         }
         
@@ -192,6 +205,9 @@ CamImage Ov7670Cam::videoStream() {
         img.buf = fb->buf;
     }
 
+    // 返回捕获到的帧前让出控制权
+    yield();
+    
     // 返回捕获到的帧
     return img;
 }

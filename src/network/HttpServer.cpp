@@ -2,6 +2,8 @@
 #include "network/HttpServer.h"
 #include "hardware/Ov7670Cam.h"
 #include "hardware/Tb6612fng.h"
+#include <esp_task_wdt.h>
+#include <freertos/task.h>
 
 
 // 创建摄像头对象
@@ -28,14 +30,24 @@ class VideoStreamResponse: public AsyncAbstractResponse {
     }
 
     size_t _fillBuffer(uint8_t *buf, size_t maxLen) override {
+      // 喂狗以防止任务看门狗超时
+      esp_task_wdt_reset();
+
       if (!_camera->isStreaming()) {
         return 0;
       }
 
       CamImage image = _camera->videoStream();
+      // 获取图像后立即喂狗
+      esp_task_wdt_reset();
+      
       if (!image.buf) {
+        // 喂狗
+        esp_task_wdt_reset();
         // 如果获取图像失败，短暂延迟后重试
         vTaskDelay(5 / portTICK_PERIOD_MS);
+        // 喂狗
+        esp_task_wdt_reset();
         return RESPONSE_TRY_AGAIN;
       }
 
@@ -53,6 +65,11 @@ class VideoStreamResponse: public AsyncAbstractResponse {
         } else if (image.buf) {
           free(image.buf);
         }
+        // 喂狗
+        esp_task_wdt_reset();
+        vTaskDelay(5 / portTICK_PERIOD_MS);
+        // 喂狗
+        esp_task_wdt_reset();
         return RESPONSE_TRY_AGAIN;
       }
 
@@ -62,6 +79,9 @@ class VideoStreamResponse: public AsyncAbstractResponse {
       // 将图像数据复制到缓冲区
       memcpy(buf + headerLen, image.buf, image.buf_len);
 
+      // 释放图像内存前喂狗
+      esp_task_wdt_reset();
+      
       // 释放图像内存
       if (image.fb) {
         esp_camera_fb_return(image.fb);
@@ -71,9 +91,11 @@ class VideoStreamResponse: public AsyncAbstractResponse {
 
       // 添加延迟，让其他任务有机会运行，防止看门狗超时
       // 增加延迟时间并主动让出控制权
+      // 喂狗
+      esp_task_wdt_reset();
       vTaskDelay(5 / portTICK_PERIOD_MS);
-      //增加电子狗投喂
-    
+      // 喂狗
+      esp_task_wdt_reset();
       yield();
   
       

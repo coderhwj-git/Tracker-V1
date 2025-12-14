@@ -46,19 +46,21 @@ void setup() {
   //设置电机测试 - 运行更长时间以便观察效果
   logger.info("开始电机测试...");
   // tb6612fng->test(120, 5);
-  delay(1000 * 5);
+  // delay(1000 * 5);
 
-  camera = new Ov7670Cam();
-  if (!camera->initCamera()) {  
-    logger.error("摄像头初始化失败");
-  } else {
-    logger.info("摄像头初始化成功");
-  }
+  // camera = new Ov7670Cam();
+  // if (!camera->initCamera()) {  
+  //   logger.error("摄像头初始化失败");
+  // } else {
+  //   logger.info("摄像头初始化成功");
+  // }
   
   //启动HTTP服务器（在电机对象创建后再初始化）
   server = new HttpServer();
   server->start();
   logger.info("HTTP服务器启动完成...");
+
+
 }
 
 void loop() {
